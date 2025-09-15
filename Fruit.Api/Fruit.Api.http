@@ -1,0 +1,6 @@
+@Fruit.Api_HostAddress = http://localhost:5094
+
+GET {{Fruit.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
