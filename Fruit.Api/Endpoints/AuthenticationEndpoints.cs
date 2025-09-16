@@ -14,7 +14,6 @@ public static class AuthenticationEndpoints
     // Método para mapear todos os endpoints de autenticação
     public static void MapAuthentication(this IEndpointRouteBuilder app)
     {
-        // Endpoint genérico para gerar um token (pode ser removido se não for usado)
         app.MapPost("/api/token", (IConfiguration config) =>
         {
             var claims = new[]
@@ -32,13 +31,14 @@ public static class AuthenticationEndpoints
                 signingCredentials: creds
             );
             var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
-            return Results.Ok(new { token = jwtToken });
+            var refreshToken = Guid.NewGuid().ToString();
+            AddRefreshToken(refreshToken, jwtToken);
+            return Results.Ok(new { token = jwtToken, refreshToken  });
         });
 
         // Endpoint de refresh token
         app.MapPost("/api/refresh", (RefreshTokenRequest request, IConfiguration config) =>
         {
-            // 1. Valida se o refresh token existe no nosso "banco de dados" temporário.
             if (string.IsNullOrEmpty(request.RefreshToken) || !refreshTokens.ContainsKey(request.RefreshToken))
             {
                 return Results.Unauthorized();
@@ -52,45 +52,36 @@ public static class AuthenticationEndpoints
                 ValidIssuer = config["Jwt:Issuer"],
                 ValidateAudience = true,
                 ValidAudience = config["Jwt:Audience"],
-                ValidateLifetime = false // Importante: não valida o tempo de vida aqui.
+                ValidateLifetime = false 
             };
 
             ClaimsPrincipal principal;
             try
             {
-                // A validação irá falhar se a assinatura ou o emissor/audiência estiverem incorretos.
                 principal = tokenHandler.ValidateToken(request.ExpiredToken, tokenValidationParameters, out SecurityToken validatedToken);
             }
             catch (Exception)
             {
-                // Se a validação falhar por qualquer motivo (exceto tempo de vida), retorna Unauthorized.
                 return Results.Unauthorized();
             }
 
-            // 3. Invalida o refresh token antigo para evitar reuso.
             refreshTokens.TryRemove(request.RefreshToken, out _);
 
-            // 4. Extrai o ID do usuário (subject) do token.
-            // Correção: Usa ClaimTypes.NameIdentifier para garantir que o 'sub' seja encontrado.
             var mobileNo = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(mobileNo))
             {
-                // Se o token não contiver o ID do usuário, a validação é inválida.
                 return Results.Unauthorized();
             }
 
-            // 5. Gera um novo Access Token e um novo Refresh Token.
-            var newJwtToken = GenerateJwtToken(mobileNo, config);
+             var newJwtToken = GenerateJwtToken(mobileNo, config);
             var newRefreshToken = Guid.NewGuid().ToString();
 
-            // 6. Armazena o novo refresh token para o usuário.
             refreshTokens.TryAdd(newRefreshToken, mobileNo);
 
             return Results.Ok(new { accessToken = newJwtToken, refreshToken = newRefreshToken });
         }).WithOpenApi();
     }
 
-    // Método auxiliar para gerar o JWT Token.
     public static string GenerateJwtToken(string mobileNo, IConfiguration config)
     {
         var claims = new[]
@@ -112,7 +103,6 @@ public static class AuthenticationEndpoints
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    // Método para adicionar um refresh token (chamado a partir do endpoint de login).
     public static void AddRefreshToken(string refreshToken, string mobileNo)
     {
         refreshTokens.TryAdd(refreshToken, mobileNo);
