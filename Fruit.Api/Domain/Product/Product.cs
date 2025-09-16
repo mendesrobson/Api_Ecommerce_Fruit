@@ -1,6 +1,6 @@
 ﻿namespace Fruit.Api.Domain.Product;
 
-public class Product
+public record class Product
 {
     public int ProductId { get; set; }
     public string ProductSku { get; set; }
