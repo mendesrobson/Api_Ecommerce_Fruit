@@ -4,7 +4,8 @@ public static class Endpoints
 {
     public static void MapAllEndpoints(this IEndpointRouteBuilder app)
     { 
-        app.MapAuthication();
+        app.MapAuthentication();
         app.MapProductEndpoints();
+        app.MapCustomerEndpoints();
     }
 }

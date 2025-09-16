@@ -1,10 +1,13 @@
 // 1. Configurar o WebApplicationBuilder
 using Fruit.Api.Endpoints;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
 
+
+IdentityModelEventSource.ShowPII = true;
 var builder = WebApplication.CreateBuilder(args);
 
 // 2. Adicionar todos os serviços ao container **AQUI**
