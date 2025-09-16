@@ -46,8 +46,6 @@ var app = builder.Build();
 
 // 4. Configurar o pipeline de requisição (middleware)
 
-// Configuração do Swagger/OpenAPI - Coloque-a no início do pipeline
-// Para habilitar o Swagger apenas em desenvolvimento
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -59,8 +57,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // 5. Mapear os endpoints
-Endpoints endpoint = new();
-endpoint.MapEndpoints(app, builder);
+app.MapAllEndpoints();
 
 // 6. Rodar a aplicação
 app.Run();
