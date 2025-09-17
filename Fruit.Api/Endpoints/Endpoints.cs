@@ -7,5 +7,6 @@ public static class Endpoints
         app.MapAuthentication();
         app.MapProductEndpoints();
         app.MapCustomerEndpoints();
+        app.MapCategoryEndpoints();
     }
 }
