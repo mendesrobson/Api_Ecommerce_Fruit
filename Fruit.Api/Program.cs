@@ -1,8 +1,12 @@
 // 1. Configurar o WebApplicationBuilder
 using Fruit.Api.Endpoints;
+using Fruit.Api.Infra.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using System.Security.Claims;
 using System.Text;
 
@@ -10,9 +14,27 @@ using System.Text;
 IdentityModelEventSource.ShowPII = true;
 var builder = WebApplication.CreateBuilder(args);
 
-// 2. Adicionar todos os serviços ao container **AQUI**
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metrics =>
+    {
+        metrics.AddAspNetCoreInstrumentation()
+               .AddPrometheusExporter();
+    })
+    .WithTracing(tracing =>
+    {
+        tracing.AddAspNetCoreInstrumentation()
+               .AddOtlpExporter(otlpOptions =>
+               {
+                   otlpOptions.Endpoint = new Uri("http://host.docker.internal:4317");
+               });
+    });
 
 // Adicionar os serviços de Autenticação e Autorização
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -44,10 +66,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// 3. Construir a aplicação
 var app = builder.Build();
-
-// 4. Configurar o pipeline de requisição (middleware)
 
 if (app.Environment.IsDevelopment())
 {
@@ -58,9 +77,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
-// 5. Mapear os endpoints
 app.MapAllEndpoints();
 
-// 6. Rodar a aplicação
 app.Run();

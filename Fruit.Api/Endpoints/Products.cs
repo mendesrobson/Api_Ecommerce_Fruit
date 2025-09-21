@@ -14,8 +14,8 @@ public static class Products
 
             return Results.Created($"/api/BigBasket/{product.ProductId}", product);
         })
-        .WithOpenApi()
-        .RequireAuthorization();
+        .WithOpenApi();
+        //.RequireAuthorization();
 
         // 2. Endpoint GetAllProducts
         app.MapGet("/api/ecommerce/GetAllProducts", () =>
@@ -47,8 +47,8 @@ public static class Products
 
             return Results.Ok(response);
         })
-        .WithOpenApi()
-        .RequireAuthorization();
+        .WithOpenApi();
+        //.RequireAuthorization();
 
         // 3. Endpoint GetAllProductsByCategoryId
         app.MapGet("/api/ecommerce/GetAllProductsByCategoryId", (int id) =>
@@ -81,7 +81,7 @@ public static class Products
 
             return Results.Ok(response);
         })
-        .WithOpenApi()
-        .RequireAuthorization();
+        .WithOpenApi();
+        //.RequireAuthorization();
     }
 }

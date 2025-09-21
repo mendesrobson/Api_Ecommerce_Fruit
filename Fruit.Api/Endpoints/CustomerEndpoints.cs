@@ -90,8 +90,8 @@ public static class CustomerEndpoints
 
             return Results.Ok(response);
         })
-        .WithOpenApi()
-        .RequireAuthorization();
+        .WithOpenApi();
+        //.RequireAuthorization();
 
         // Endpoint: Login
         app.MapPost("/api/customer/login", (LoginRequest loginRequest, IConfiguration config) =>
